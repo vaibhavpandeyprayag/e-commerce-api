@@ -2,6 +2,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const app = express();
+// const db = require("./db/db"); // Import the MySQL connection pool
 
 // Middleware
 app.use(bodyParser.json());
@@ -10,7 +11,7 @@ app.use(cors()); // Enable CORS for all routes
 
 // Routes
 // Define your API routes here
-app.get("/api/data", (req, res) => {
+app.get("/api/data", (req: any, res: any) => {
   // Replace this with your actual data or logic to fetch data
   const data = {
     message: "Hello from the server!",
