@@ -8,9 +8,5 @@ const pool = new Pool({
   port: Number(process.env.POSTGRESQL_ADDON_PORT),
   password: process.env.POSTGRESQL_ADDON_PASSWORD,
 });
-pool.connect((err: any) => {
-  if (err) throw err;
-  console.log("Connected!");
-});
 
 export default pool;
