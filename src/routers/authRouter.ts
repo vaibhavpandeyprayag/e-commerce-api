@@ -1,23 +1,36 @@
-import express from "express";
+import express, { Response } from "express";
 import { PoolClient } from "pg";
 import db from "../db/db";
 import { decrypt } from "../crypto";
+import jwt from "jsonwebtoken";
+import { ServerResponse } from "http";
+import { APIResponse } from "../types";
 
 const authRouter = express.Router();
+const SECRET_KEY = process.env.SECRET_KEY as string;
 
 authRouter.post("/signup", async (req, res) => {
-  const { firstname, lastname, email, password } = req.body;
-  const connection: PoolClient = await db.connect();
-
-  let query = `insert into user_auth_info (email, password) values ('${email}', '${password}');`;
-  console.log("signup query >>", query);
-  const response = await connection.query(query);
-  console.log(response);
-  res
-    .status(201)
-    .send({ status: 201, message: "Account created successfully." });
-
-  connection.release();
+  let connection: PoolClient | undefined = undefined;
+  try {
+    const { firstname, lastname, email, password } = req.body;
+    connection = await db.connect();
+    let query = `insert into user_auth_info (email, password) values ('${email}', '${password}');`;
+    console.log("signup query >>", query);
+    const dbResponse = await connection.query(query);
+    console.log(dbResponse);
+    let response: APIResponse = {
+      message: "Account created successfully.",
+    };
+    res.status(201).send(response);
+  } catch (error) {
+    console.error(error);
+    let response: APIResponse = {
+      message: "Internal Server Error",
+    };
+    res.status(500).send(response);
+  } finally {
+    if (connection != undefined) connection.release();
+  }
 });
 
 authRouter.post("/login", async (req, res) => {
@@ -25,23 +38,38 @@ authRouter.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
     connection = await db.connect();
-    let query = `select password from user_auth_info where email = '${email}';`;
+    let query = `select id, password from user_auth_info where email = '${email}'`;
     console.log("login query >>", query);
-    const response = await connection.query(query);
-    console.log(response);
-    if (response.rowCount > 0) {
-      const passwordFromDb = response.rows[0].password;
-      if (decrypt(password) === decrypt(passwordFromDb))
-        res
-          .status(200)
-          .send({ status: 200, message: "Logged in successfully." });
-      else
-        res.status(401).send({ status: 401, message: "Invalid credentials." });
-    } else
-      res.status(401).send({ status: 401, message: "Invalid credentials." });
+    const dbResponse = await connection.query(query);
+    console.log(dbResponse);
+    if (dbResponse.rowCount > 0) {
+      const userId = dbResponse.rows[0].id;
+      const passwordFromDb = dbResponse.rows[0].password;
+      if (decrypt(password) === decrypt(passwordFromDb)) {
+        const loginToken = jwt.sign({ id: userId }, SECRET_KEY);
+        let response: APIResponse = {
+          message: "Logged in successfully",
+          data: { user: loginToken },
+        };
+        res.status(200).send(response);
+      } else {
+        let response: APIResponse = {
+          message: "Invalid credentials",
+        };
+        res.status(401).send(response);
+      }
+    } else {
+      let response: APIResponse = {
+        message: "Invalid credentials",
+      };
+      res.status(401).send(response);
+    }
   } catch (error) {
     console.error(error);
-    res.status(500).send({ status: 500, message: "Internal Server Error" });
+    let response: APIResponse = {
+      message: "Internal Server Error",
+    };
+    res.status(500).send(response);
   } finally {
     if (connection != undefined) connection.release();
   }
