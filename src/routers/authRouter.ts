@@ -5,6 +5,7 @@ import { decrypt } from "../crypto";
 import jwt from "jsonwebtoken";
 import { ServerResponse } from "http";
 import { APIResponse } from "../types";
+import { verifyJWT } from "../middlewares";
 
 const authRouter = express.Router();
 const SECRET_KEY = process.env.SECRET_KEY as string;
@@ -46,7 +47,9 @@ authRouter.post("/login", async (req, res) => {
       const userId = dbResponse.rows[0].id;
       const passwordFromDb = dbResponse.rows[0].password;
       if (decrypt(password) === decrypt(passwordFromDb)) {
-        const loginToken = jwt.sign({ id: userId }, SECRET_KEY);
+        const loginToken = jwt.sign({ id: userId }, SECRET_KEY, {
+          expiresIn: "10s",
+        });
         let response: APIResponse = {
           message: "Logged in successfully",
           data: { user: loginToken },
@@ -74,5 +77,7 @@ authRouter.post("/login", async (req, res) => {
     if (connection != undefined) connection.release();
   }
 });
+
+authRouter.post("/test", verifyJWT, (req, res) => {});
 
 export default authRouter;
