@@ -1,5 +1,6 @@
 import express from "express";
-import authRouter from "./routers/authRouter";
+import authRouter from "./logic/authLogic";
+import productRouter from "./logic/productLogic";
 const bodyParser = require("body-parser");
 const cors = require("cors");
 
@@ -11,7 +12,7 @@ app.use(cors()); // Enable CORS for all routes
 
 // Routes
 // Define your API routes here
-app.use("/auth", authRouter);
+app.use("/", [authRouter, productRouter]);
 
 // Start the server
 const port = process.env.PORT || 5000;

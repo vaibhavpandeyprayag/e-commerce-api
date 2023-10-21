@@ -15,8 +15,7 @@ export const verifyJWT = (req: Request, res: Response, next: NextFunction) => {
 
     const decoded = jwt.verify(token, SECRET_KEY);
     // console.log(decoded);
-    let response: APIResponse = { message: "Already loggin in" };
-    res.status(200).send(response);
+    next();
   } catch (error) {
     let response: APIResponse = { message: "Session exprired" };
     res.status(401).send(response);

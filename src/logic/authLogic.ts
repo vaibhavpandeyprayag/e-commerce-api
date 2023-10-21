@@ -1,21 +1,20 @@
-import express, { Response } from "express";
+import express from "express";
 import { PoolClient } from "pg";
 import db from "../db/db";
 import { decrypt } from "../crypto";
 import jwt from "jsonwebtoken";
-import { ServerResponse } from "http";
 import { APIResponse } from "../types";
 import { verifyJWT } from "../middlewares";
 
 const authRouter = express.Router();
 const SECRET_KEY = process.env.SECRET_KEY as string;
 
-authRouter.post("/signup", async (req, res) => {
+authRouter.post("/auth/signup", async (req, res) => {
   let connection: PoolClient | undefined = undefined;
   try {
     const { firstname, lastname, email, password } = req.body;
     connection = await db.connect();
-    let query = `insert into user_auth_info (email, password) values ('${email}', '${password}');`;
+    let query = `insert into public.users (name, email, password) values ('Vaibhav Pandey', '${email}', '${password}');`;
     console.log("signup query >>", query);
     const dbResponse = await connection.query(query);
     console.log(dbResponse);
@@ -34,12 +33,12 @@ authRouter.post("/signup", async (req, res) => {
   }
 });
 
-authRouter.post("/login", async (req, res) => {
+authRouter.post("/auth/login", async (req, res) => {
   let connection: PoolClient | undefined = undefined;
   try {
     const { email, password } = req.body;
     connection = await db.connect();
-    let query = `select * from user_auth_info where email = '${email}'`;
+    let query = `select * from public.users where email = '${email}'`;
     console.log("login query >>", query);
     const dbResponse = await connection.query(query);
     console.log(dbResponse);
@@ -81,6 +80,9 @@ authRouter.post("/login", async (req, res) => {
   }
 });
 
-authRouter.post("/test", verifyJWT, (req, res) => {});
+authRouter.post("/auth/verifyJwt", verifyJWT, async (req, res) => {
+  let response: APIResponse = { message: "User verified" };
+  res.status(200).send(response);
+});
 
 export default authRouter;
