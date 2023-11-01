@@ -45,7 +45,7 @@ authRouter.post("/auth/login", async (req, res) => {
     if (dbResponse.rowCount > 0) {
       const userId = dbResponse.rows[0].id;
       const passwordFromDb = dbResponse.rows[0].password;
-      const firstname = dbResponse.rows[0].firstname;
+      const name = dbResponse.rows[0].name;
       if (decrypt(password) === decrypt(passwordFromDb)) {
         const loginToken = jwt.sign({ id: userId }, SECRET_KEY, {
           expiresIn: "3600s",
@@ -53,7 +53,7 @@ authRouter.post("/auth/login", async (req, res) => {
         let response: APIResponse = {
           message: "Logged in successfully",
           data: {
-            user: { token: loginToken, id: userId, firstname: firstname },
+            user: { token: loginToken, id: userId, name: name },
           },
         };
         res.status(200).send(response);
